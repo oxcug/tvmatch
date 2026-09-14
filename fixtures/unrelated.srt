@@ -1,0 +1,11 @@
+1
+00:00:01,000 --> 00:00:04,000
+My bicycle bell tastes faintly of cinnamon.
+
+2
+00:00:13,000 --> 00:00:16,000
+Someone folded this river into a blue envelope.
+
+3
+00:00:25,000 --> 00:00:28,000
+Let us invite the quiet thunder to breakfast.

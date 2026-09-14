@@ -1,0 +1,13 @@
+/target/
+
+# Local credentials (the CLI reads the process environment, not dotenv files).
+.env
+.env.*
+!.env.example
+/credentials/
+/credentials.json
+
+# Local logs and opt-in diagnostic artifacts; keep source docs and SRT fixtures.
+*.log
+/diagnostics/
+/tvmatch-diagnostics/

@@ -1,0 +1,33 @@
+[package]
+name = "media-isobmff"
+version = "0.0.1"
+edition = "2024"
+publish = false
+description = "Native ISO Base Media File Format box parsing and writing, bounded non-fragmented demuxing, fMP4 helpers and HEIF metadata."
+
+[lib]
+name = "media_isobmff"
+path = "src/lib.rs"
+
+[features]
+default = ["fmp4", "heif"]
+
+# Native fragmented MP4 and initialization-segment helpers.
+fmp4 = []
+
+# HEIF box subset (meta/hdlr/pitm/iloc/iinf/iref/iprp/ipco/ipma plus the
+# property boxes ispe/pixi/colr/pasp/auxC/irot/imir/clap). Defined in
+# ISO/IEC 23008-12 on top of ISO/IEC 14496-12.
+heif = []
+
+[dependencies]
+thiserror = "2.0"
+
+[dev-dependencies]
+# Mozilla's pure-Rust parser, MPL-2.0. Retained but currently unused by
+# this crate's tests; its presence does not establish cross-parser validation.
+mp4parse = { version = "0.17", optional = false }
+# Bit-exact oracle for the native fMP4 box writers. `boxes::tests`
+# encodes each box twice (native + mp4-atom + the documented v0.10
+# patches) and compares bytes. Production code is mp4-atom-free.
+mp4-atom = "0.10"

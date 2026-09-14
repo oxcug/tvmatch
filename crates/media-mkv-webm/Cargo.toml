@@ -1,0 +1,32 @@
+[package]
+name = "media-mkv-webm"
+version = "0.0.1"
+edition = "2024"
+publish = false
+description = "Matroska and WebM container parsing, bounded streaming, muxing, PGS image decoding and optional audio decoding."
+
+[lib]
+name = "media_mkv_webm"
+path = "src/lib.rs"
+
+[dependencies]
+# Container layer has no third-party deps. Codec dispatch is feature-
+# gated so a leaner build (e.g. WebM-only path) can drop symphonia.
+#
+# Symphonia 0.5.x supports AAC/Vorbis/FLAC/PCM, but not Opus.
+# AudioDecoder keeps backend types out of the public interface.
+symphonia = { version = "0.5.4", default-features = false, features = [
+    "vorbis", "aac", "flac", "pcm",
+], optional = true }
+
+[features]
+default = ["audio-symphonia"]
+audio-symphonia = ["dep:symphonia"]
+
+[dev-dependencies]
+# Cross-parse oracle. Triple-licensed (Zlib OR MIT OR Apache-2.0) and
+# scoped to the Matroska∩WebM intersection — same shape as our
+# in-tree demuxer. Used in tests/diff_against_matroska_demuxer.rs
+# to confirm both parsers agree on EBML header + Info + Tracks for
+# synthetic fixtures.
+matroska-demuxer = "0.7"

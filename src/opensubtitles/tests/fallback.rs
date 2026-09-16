@@ -218,20 +218,17 @@ fn all_empty_fallbacks_are_one_per_call_and_three_total_not_score_shopping() {
         assert!(run(&c, &m, &mut mock, &mut ui, false).is_err());
         assert_eq!(mock.files, vec![file]);
         assert_eq!((mock.posts, mock.contents), (1, 1));
-        assert!(
-            p.parent()
-                .unwrap()
-                .join(format!("file-{file}.partial/content.srt"))
-                .exists()
-        );
+        assert!(p
+            .parent()
+            .unwrap()
+            .join(format!("file-{file}.partial/content.srt"))
+            .exists());
     }
     let mut mock = Mock::new(None);
-    assert!(
-        run(&c, &m, &mut mock, &mut ui, false)
-            .unwrap_err()
-            .0
-            .contains("limit")
-    );
+    assert!(run(&c, &m, &mut mock, &mut ui, false)
+        .unwrap_err()
+        .0
+        .contains("limit"));
     assert_eq!((mock.gets, mock.posts), (0, 0));
     drop(c);
     fs::remove_dir_all(root).unwrap();
@@ -257,8 +254,15 @@ fn malformed_or_nonempty_references_and_zero_quota_never_trigger_replacement_pos
             confirmed: 0,
             yes: true,
         };
-        assert!(run(&c, &m, &mut mock, &mut ui, false).is_err());
+        let error = run(&c, &m, &mut mock, &mut ui, false).unwrap_err().0;
         assert_eq!((mock.gets, mock.posts, ui.offered), (0, 0, 0));
+        assert!(
+            error.contains("bytes retained")
+                || error.contains("raw staging parse")
+                || error.contains("incomplete")
+                || error.contains("zero"),
+            "{error}"
+        );
         drop(c);
         fs::remove_dir_all(root).unwrap();
     }

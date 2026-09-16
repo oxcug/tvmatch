@@ -85,7 +85,7 @@ fn skipping_missing_text_never_hides_other_errors_or_evades_bounds() {
     let tail = "\n2\n00:00:03,000 --> 00:00:04,000\nKept.\n";
     for bad in [
         "1\n00:00:02,000 --> 00:00:01,000\n",
-        "1\n00:00:01,000 --> 00:00:02.00\n",
+        "1\n00:00:01,000 --> 00:00:02.0000\n",
         "1\n00:61:01,000 --> 00:61:02,000\n",
         "1\n00:00:01,000 --> 00:00:02,000\n\0\n",
         "1\n00:00:01,000 --> 00:00:02,000\n\u{0092}\n",
@@ -200,4 +200,28 @@ fn community_s2e14_html_escaped_title_agrees_without_changing_ids_or_frozen_labe
         }
         assert_eq!((online.gets, online.posts, online.contents), (3, 0, 0));
     }
+}
+
+#[test]
+fn community_watermark_short_fraction_and_unseparated_tail_index_are_imported() {
+    let raw = concat!(
+        "1\n00:00:01,000 --> 00:00:02,000\nHello office.\n\n",
+        "2\n00:20:59,100 --> 00:21:01,000\nDo they not like me, though?\n\n",
+        "3\n00:21:01,000 --> 00:21:01,900\n",
+        "<font color=\"#ffff00\">welcome to www.1000fr.com</font>\n",
+        "9999\n00:00:0,500 --> 00:00:2,00\n",
+        "<font color=\"#ffff00\" size=14>www.tvsubtitles.net</font>\n",
+    );
+    let p = transcript(raw.as_bytes()).unwrap();
+    let cues = p.transcript.cues();
+    assert!(cues.iter().any(|c| c.text == "Hello office."));
+    assert!(cues
+        .iter()
+        .any(|c| c.text == "Do they not like me, though?"));
+    assert_eq!(
+        cues.iter()
+            .find(|c| c.text.contains("tvsubtitles.net"))
+            .map(|c| (c.start_ms, c.end_ms)),
+        Some((500, 2000))
+    );
 }

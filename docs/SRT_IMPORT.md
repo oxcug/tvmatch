@@ -5,7 +5,7 @@
 The provider accepts UTF-8, or explicit UTF-16LE/BE BOMs; no unmarked legacy-encoding
 guesses, lossy surrogate replacement or external parser fallback. Raw input and decoded
 UTF-8 each retain the 1 MiB cap. LF/CRLF/CR may be mixed. Literal `-->` permits surrounding
-whitespace; milliseconds still require exactly three digits, comma or dot. Optional
+whitespace; fractional seconds are a 1–3 digit decimal fraction, comma or dot. Optional
 `X1:n X2:n Y1:n Y2:n` placement must be complete, ordered, unsigned u32, non-reversed,
 and free of extra settings. It affects rendering only, not cue text or timestamps.
 
@@ -51,7 +51,8 @@ salvager. Raw downloaded bytes and their verified receipt/hash remain authoritat
 
 1. Decode only UTF-8 or BOM-marked UTF-16 with independent 1 MiB raw/decoded bounds.
    Split physical LF/CRLF/CR lines. Lex timing rows and reject forbidden
-   controls/malformed clock-shaped arrows. At most 4096 timed records, including
+   controls/malformed clock-shaped arrows (empty fields, 4+ digit fractions,
+   hours>99, minutes/seconds>59). At most 4096 timed records, including
    zero-duration and missing-text records that will not become matching evidence.
 2. **Frame all records once** (`records/parser.rs`). Consume every nonblank line
    as a label, timing row, or caption. A valid standalone timing row starts a record;
@@ -77,18 +78,19 @@ salvager. Raw downloaded bytes and their verified receipt/hash remain authoritat
 - Clock hours/minutes/seconds are bounded integer fields (1–6 ASCII digits), with
   fixed units and the normal 99/59/59 limits. Redundant zero padding is insignificant:
   `00:01:011,000` has the same numeric value as `00:01:11,000`.
-- Fractional seconds require **exactly three digits**; comma or dot is accepted.
-  Never infer missing precision, carry an overflowing field, invent duration, or
-  repair a negative interval. Arrow spelling is literal `-->`; surrounding spaces
-  are optional. Noncanonical accepted spellings are counted in provenance.
+- Fractional seconds are a decimal fraction with **1–3 digits** (tenths, hundredths,
+  thousandths); comma or dot is accepted. `00:00:2,00` is 2.00 seconds, not 2 ms.
+  Never left-pad as integer milliseconds, carry an overflowing field, invent duration,
+  or repair a negative interval. Four-or-more-digit fractions remain errors. Arrow
+  spelling is literal `-->`; surrounding spaces are optional. Noncanonical accepted
+  spellings are counted in provenance.
 - Explicit labels must start numerically at 1 and strictly increase. Integer parts
   fit u32; optional decimal fractions have at most 9 digits and use exact integer
   comparison, not floating point. Gaps do not invent absent captions.
-- Without a preceding blank separator, a numeric label needs additional evidence:
-  an integer successor, or a fractional insertion between the previous label and
-  a following conventionally framed adjacent integer label. Thus `19.5` between
-  labels 19 and 20 is recognized, but an unrelated number is not silently stripped
-  from dialogue. Numeric strings not in header position remain caption text.
+- A numeric label immediately before a timing row is structural metadata even without
+  a blank separator, provided it strictly increases. Unrelated numbers that are not
+  followed by a timing row remain caption text. Thus `19.5` between labels 19 and 20
+  is a header when a timing row follows; a dialogue number is not stripped.
 - Consecutive or final unindexed timing records are permitted. Empty records with
   valid timing/framing return `MissingText`; the provider importer skips them, even
   at EOF or with zero duration. The strict public SRT API still rejects missing text.

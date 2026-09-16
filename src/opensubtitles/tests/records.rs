@@ -100,7 +100,7 @@ fn omission_cannot_hide_controls_bad_timestamps_negative_durations_or_ambiguous_
             "00:00:01,000 --> 00:00:02,000",
             "00:00:02,000 --> 00:00:01,000",
         ),
-        ZERO.replace("00:00:01,000", "00:00:01.00"),
+        ZERO.replace("00:00:01,000", "00:00:01.0000"),
         ZERO.replace("\n\n2\n", "\n7.5\n"),
         ZERO.replace(
             "Skipped zero display.",

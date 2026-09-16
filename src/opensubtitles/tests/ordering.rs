@@ -49,12 +49,10 @@ fn ordering_is_stable_preserves_duplicate_occurrences_and_composes_caption_polic
     );
     let already_sorted =
         "1\n00:00:01,000 --> 00:00:02,000\nFirst\n\n2\n00:00:01,000 --> 00:00:03,000\nSecond\n";
-    assert!(
-        transcript(already_sorted.as_bytes())
-            .unwrap()
-            .cue_ordering
-            .is_none()
-    );
+    assert!(transcript(already_sorted.as_bytes())
+        .unwrap()
+        .cue_ordering
+        .is_none());
 }
 #[test]
 fn ordering_never_repairs_other_structure_or_bounds() {
@@ -71,19 +69,17 @@ fn ordering_never_repairs_other_structure_or_bounds() {
     for suffix in [
         "3x\n00:00:06,000 --> 00:00:07,000\nWrong index\n",
         "3\n00:00:06,000 --> 00:00:05,000\nNegative duration\n",
-        "3\n00:00:06,00 --> 00:00:07,000\nBad timestamp\n",
+        "3\n00:00:06,0000 --> 00:00:07,000\nBad timestamp\n",
         "3\n00:00:06,000 --> 00:00:07,000\nForbidden\u{009c}\n",
         "3\n00:00:06,000 --> 00:00:07,000\n \u{009d} \n",
     ] {
         assert!(transcript(format!("{RAW}{suffix}").as_bytes()).is_err());
     }
     let zero_duration = format!("{RAW}3\n00:00:06,000 --> 00:00:06,000\nZero\n");
-    assert!(
-        crate::opensubtitles::ordering::parse(&format!(
-            "{RAW}4\n00:00:06,000 --> 00:00:07,000\nGap\n"
-        ))
-        .is_err()
-    );
+    assert!(crate::opensubtitles::ordering::parse(&format!(
+        "{RAW}4\n00:00:06,000 --> 00:00:07,000\nGap\n"
+    ))
+    .is_err());
     let error = crate::opensubtitles::ordering::parse(&zero_duration)
         .err()
         .unwrap()

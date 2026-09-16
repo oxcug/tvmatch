@@ -41,16 +41,17 @@ fn clock(s: &str) -> Option<u64> {
     let (m, rest) = rest.split_once(':')?;
     let (sec, ms) = rest.split_once(',').or_else(|| rest.split_once('.'))?;
     // Integer clock fields have fixed units; padding is insignificant. Fractional
-    // seconds still require exactly three digits: never guess missing precision.
+    // seconds are a decimal fraction with 1..=3 digits (tenths/hundredths/
+    // thousandths), never left-padded integer milliseconds.
     if [h, m, sec]
         .iter()
         .any(|v| v.is_empty() || v.len() > 6 || !v.bytes().all(|b| b.is_ascii_digit()))
-        || ms.len() != 3
+        || !(1..=3).contains(&ms.len())
         || !ms.bytes().all(|b| b.is_ascii_digit())
     {
         return None;
     }
-    let (h, m, sec, ms) = (
+    let (h, m, sec, frac) = (
         h.parse::<u64>().ok()?,
         m.parse::<u64>().ok()?,
         sec.parse::<u64>().ok()?,
@@ -59,6 +60,7 @@ fn clock(s: &str) -> Option<u64> {
     if h > 99 || m > 59 || sec > 59 {
         return None;
     }
+    let ms = frac * 10u64.pow((3 - ms.len()) as u32);
     Some(((h * 60 + m) * 60 + sec) * 1000 + ms)
 }
 fn timing(s: &str, line: usize) -> Result<Option<Timing>> {
@@ -205,23 +207,9 @@ pub(in crate::opensubtitles) fn parse(text: &str) -> Result<Vec<RecordResult>> {
                     pos + 1
                 )));
             }
-            if !separated {
-                let integer_successor = previous.is_some_and(|p| {
-                    p.fraction == 0
-                        && index.fraction == 0
-                        && p.whole.checked_add(1) == Some(index.whole)
-                });
-                let fractional_between = previous
-                    .is_some_and(|p| p.whole == index.whole && p < index && index.fraction > 0)
-                    && anchors.range((pos + 2)..).next().is_some_and(|(_, next)| {
-                        next.fraction == 0 && index.whole.checked_add(1) == Some(next.whole)
-                    });
-                if !integer_successor && !fractional_between {
-                    return Err(fail(
-                        "provider record import: ambiguous numeric caption/cue boundary",
-                    ));
-                }
-            }
+            // A strictly increasing label immediately before a timing row is a
+            // header even without a blank separator. Dialogue numbers without a
+            // following timing row stay caption text in the body scanner.
             let original = lines.at(pos).trim().to_owned();
             pos += 1;
             previous = Some(index);

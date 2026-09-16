@@ -139,7 +139,10 @@ impl Cache {
         }
         let decoded = crate::srt::layout::decode(&raw)
             .map_err(|e| fail(&format!("empty reference decoding: {e}")))?;
-        let records = parser::parse(&decoded.text)?;
+        // Malformed syntax is not an empty caption proof; the recover error stands.
+        let Ok(records) = parser::parse(&decoded.text) else {
+            return Ok(None);
+        };
         if records.is_empty()
             || !records
                 .iter()

@@ -73,19 +73,29 @@ fn record_repairs_compose_across_64_layout_combinations() {
 }
 #[test]
 fn timestamp_spelling_is_numeric_not_guessed_precision_or_overflow() {
-    for t in ["0:0:1.000", "000000:00:001,000", "00:00:01,000"] {
+    for t in [
+        "0:0:1.000",
+        "000000:00:001,000",
+        "00:00:01,000",
+        "00:00:001,00",
+        "0:0:1.0",
+        "00:00:1,500",
+    ] {
         let p =
             transcript(format!("1\n{t}-->00:00:02,000\nOriginal caption.\n").as_bytes()).unwrap();
-        assert_eq!(p.transcript.cues()[0].start_ms, 1000);
+        assert_eq!(
+            p.transcript.cues()[0].start_ms,
+            if t.ends_with("1,500") { 1500 } else { 1000 }
+        );
     }
     for t in [
-        "00:00:001,00",
         "00:00:001,0000",
         "00:00:060,000",
         "100:00:01,000",
         "0000000:00:01,000",
         "-00:00:01,000",
         "00:00:01e0,000",
+        "00:00:01,",
     ] {
         assert!(
             transcript(format!("1\n{t} --> 00:00:02,000\nOriginal caption.\n").as_bytes()).is_err()
